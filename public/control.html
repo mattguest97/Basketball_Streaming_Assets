@@ -263,6 +263,10 @@
           </div>
           <label>Poll every <input id="playHqPollSeconds" type="number" min="1" max="300" value="10" style="width:60px" /> seconds</label>
           <button class="btn" onclick="savePlayHqFeed()">Apply Feed</button>
+          <div>
+            <button class="btn" onclick="savePlayHqTeam('home')">Save Home Team</button>
+            <button class="btn" onclick="savePlayHqTeam('away')">Save Away Team</button>
+          </div>
         </div>
         <div id="playHqStatus" class="lineup-help">Not connected</div>
       </div>
@@ -329,8 +333,10 @@
       const socket = io();
       let lineupInitialised = false;
       let savedTeams = [];
+      let currentGameState = null;
 
       socket.on('state', (state) => {
+        currentGameState = state;
         const tipoffSeconds = Number.isFinite(Number(state.tipoffSeconds)) ? Math.max(0, Number(state.tipoffSeconds)) : 1800;
         document.getElementById('homeCurrentScore').textContent = state.home.score;
         document.getElementById('homeCurrentFouls').textContent = state.home.fouls;
@@ -526,13 +532,43 @@
         socket.emit('tipoff', { action: 'set', value: minutes * 60 + seconds });
       }
       function savePlayHqFeed() {
+        const enabled = document.getElementById('playHqEnabled').checked;
+        if (enabled) {
+          document.getElementById('playHqUseScore').checked = true;
+          document.getElementById('playHqUseTime').checked = true;
+        }
         socket.emit('playHqFeed', {
           url: document.getElementById('playHqUrl').value.trim(),
-          enabled: document.getElementById('playHqEnabled').checked,
+          enabled,
           useScore: document.getElementById('playHqUseScore').checked,
           useTime: document.getElementById('playHqUseTime').checked,
           pollSeconds: document.getElementById('playHqPollSeconds').value
         });
+      }
+      async function savePlayHqTeam(side) {
+        const liveStats = currentGameState?.liveStats;
+        const importedName = liveStats?.teamNames?.[side];
+        const importedPlayers = liveStats?.[side];
+        if (liveStats?.source !== 'playhq' || !importedName || !Array.isArray(importedPlayers)) {
+          return teamLibraryStatus('Wait for PlayHQ team data to load first');
+        }
+        try {
+          const response = await fetch('/api/teams', { cache: 'no-store' });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Could not load saved teams');
+          savedTeams = Array.isArray(data.teams) ? data.teams : [];
+          const existing = savedTeams.find((team) => team.name.trim().toLowerCase() === importedName.toLowerCase());
+          await saveTeamProfile({
+            id: existing?.id,
+            name: importedName,
+            shortName: existing?.shortName || '',
+            color: existing?.color || currentGameState[side].color,
+            logo: existing?.logo || currentGameState[side].logo || '',
+            players: importedPlayers
+          }, `${importedName} saved to team list`);
+        } catch (error) {
+          teamLibraryStatus(error.message);
+        }
       }
       function showPlayerStats() {
         socket.emit('showPlayerStats', {

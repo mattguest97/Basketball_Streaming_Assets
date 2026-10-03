@@ -1,87 +1,24 @@
 {
   "teams": [
     {
-      "id": "portsmouth-force",
-      "name": "Force",
-      "shortName": "Force",
-      "color": "#13067a",
+      "id": "oxford-hoops-senior-men",
+      "name": "Oxford Hoops Senior Men",
+      "shortName": "Hoops",
+      "color": "#d14429",
       "logo": "",
       "players": [
         {
-          "number": "2",
-          "name": "Darren Sam",
-          "points": 2,
-          "fouls": 1,
-          "onePoint": 0,
-          "twoPoint": 1,
-          "threePoint": 0
-        },
-        {
-          "number": "3",
-          "name": "Marley York",
-          "points": 0,
-          "fouls": 0,
-          "onePoint": 0,
-          "twoPoint": 0,
-          "threePoint": 0
-        },
-        {
-          "number": "4",
-          "name": "Jonny Philipson",
-          "points": 9,
+          "number": "1",
+          "name": "Hamid Ibrahim",
+          "points": 8,
           "fouls": 3,
-          "onePoint": 1,
+          "onePoint": 0,
           "twoPoint": 1,
           "threePoint": 2
         },
         {
-          "number": "5",
-          "name": "Allen Vitug",
-          "points": 5,
-          "fouls": 1,
-          "onePoint": 2,
-          "twoPoint": 0,
-          "threePoint": 1
-        },
-        {
-          "number": "6",
-          "name": "Ollie Blake",
-          "points": 13,
-          "fouls": 4,
-          "onePoint": 0,
-          "twoPoint": 2,
-          "threePoint": 3
-        },
-        {
-          "number": "8",
-          "name": "Jordan Walker",
-          "points": 6,
-          "fouls": 0,
-          "onePoint": 0,
-          "twoPoint": 3,
-          "threePoint": 0
-        },
-        {
-          "number": "11",
-          "name": "Ghaith Derzi",
-          "points": 8,
-          "fouls": 3,
-          "onePoint": 2,
-          "twoPoint": 3,
-          "threePoint": 0
-        },
-        {
-          "number": "12",
-          "name": "Matthew Hughes",
-          "points": 12,
-          "fouls": 1,
-          "onePoint": 2,
-          "twoPoint": 5,
-          "threePoint": 0
-        },
-        {
-          "number": "13",
-          "name": "Kevin Intele Lomboto",
+          "number": "4",
+          "name": "Ishaaq Amjad",
           "points": 0,
           "fouls": 0,
           "onePoint": 0,
@@ -89,26 +26,80 @@
           "threePoint": 0
         },
         {
-          "number": "14",
-          "name": "Alex Grant",
-          "points": 13,
-          "fouls": 1,
-          "onePoint": 1,
-          "twoPoint": 6,
+          "number": "5",
+          "name": "David Wells",
+          "points": 10,
+          "fouls": 5,
+          "onePoint": 2,
+          "twoPoint": 4,
           "threePoint": 0
         },
         {
-          "number": "15",
-          "name": "Lukas York",
-          "points": 4,
-          "fouls": 3,
+          "number": "6",
+          "name": "Will Corfield",
+          "points": 11,
+          "fouls": 4,
+          "onePoint": 1,
+          "twoPoint": 5,
+          "threePoint": 0
+        },
+        {
+          "number": "8",
+          "name": "Ben Flook",
+          "points": 0,
+          "fouls": 0,
           "onePoint": 0,
+          "twoPoint": 0,
+          "threePoint": 0
+        },
+        {
+          "number": "9",
+          "name": "Rokas Jodkevicius",
+          "points": 7,
+          "fouls": 2,
+          "onePoint": 3,
           "twoPoint": 2,
           "threePoint": 0
         },
         {
-          "number": "16",
-          "name": "Luke Attfield",
+          "number": "10",
+          "name": "Jonathan Thorne",
+          "points": 10,
+          "fouls": 2,
+          "onePoint": 0,
+          "twoPoint": 2,
+          "threePoint": 2
+        },
+        {
+          "number": "19",
+          "name": "Thomas Corfield",
+          "points": 17,
+          "fouls": 2,
+          "onePoint": 2,
+          "twoPoint": 6,
+          "threePoint": 1
+        },
+        {
+          "number": "22",
+          "name": "Matthew Broderick",
+          "points": 3,
+          "fouls": 4,
+          "onePoint": 1,
+          "twoPoint": 1,
+          "threePoint": 0
+        },
+        {
+          "number": "23",
+          "name": "Alekos Bakrachev",
+          "points": 3,
+          "fouls": 4,
+          "onePoint": 0,
+          "twoPoint": 0,
+          "threePoint": 1
+        },
+        {
+          "number": "24",
+          "name": "Samuel Fricker",
           "points": 0,
           "fouls": 0,
           "onePoint": 0,
@@ -118,42 +109,42 @@
       ]
     },
     {
-      "id": "rockets",
-      "name": "Rockets",
-      "shortName": "Rockets",
-      "color": "#ca3536",
+      "id": "cardiff-city-senior-men-i",
+      "name": "Cardiff City Senior Men I",
+      "shortName": "Cardiff",
+      "color": "#0052cc",
       "logo": "",
       "players": [
         {
-          "number": "0",
-          "name": "Anthony Sweeney",
+          "number": "2",
+          "name": "Aadil Shamsideen",
+          "points": 12,
+          "fouls": 2,
+          "onePoint": 2,
+          "twoPoint": 5,
+          "threePoint": 0
+        },
+        {
+          "number": "3",
+          "name": "Malaki Hilsdon",
           "points": 6,
           "fouls": 2,
-          "onePoint": 0,
-          "twoPoint": 0,
-          "threePoint": 2
+          "onePoint": 2,
+          "twoPoint": 2,
+          "threePoint": 0
         },
         {
           "number": "5",
-          "name": "Torin Jenkins",
-          "points": 2,
-          "fouls": 2,
-          "onePoint": 0,
-          "twoPoint": 1,
-          "threePoint": 0
+          "name": "Oskars Berzins",
+          "points": 13,
+          "fouls": 1,
+          "onePoint": 1,
+          "twoPoint": 3,
+          "threePoint": 2
         },
         {
-          "number": "9",
-          "name": "Cooper Shannon",
-          "points": 14,
-          "fouls": 2,
-          "onePoint": 2,
-          "twoPoint": 6,
-          "threePoint": 0
-        },
-        {
-          "number": "10",
-          "name": "Timothy Dunning",
+          "number": "7",
+          "name": "Elijah Kandola",
           "points": 0,
           "fouls": 2,
           "onePoint": 0,
@@ -161,39 +152,75 @@
           "threePoint": 0
         },
         {
-          "number": "15",
-          "name": "Alexander Tribe",
-          "points": 4,
-          "fouls": 3,
+          "number": "8",
+          "name": "Joseph White",
+          "points": 0,
+          "fouls": 0,
           "onePoint": 0,
-          "twoPoint": 2,
+          "twoPoint": 0,
           "threePoint": 0
         },
         {
-          "number": "21",
-          "name": "alex milham",
-          "points": 24,
-          "fouls": 3,
-          "onePoint": 3,
-          "twoPoint": 9,
-          "threePoint": 1
-        },
-        {
-          "number": "27",
-          "name": "Derick Mutonda",
-          "points": 7,
-          "fouls": 2,
-          "onePoint": 2,
-          "twoPoint": 1,
-          "threePoint": 1
-        },
-        {
-          "number": "38",
-          "name": "Kofi Amo-Agyei",
-          "points": 5,
-          "fouls": 3,
+          "number": "9",
+          "name": "Jezzrael Sapigao",
+          "points": 0,
+          "fouls": 0,
           "onePoint": 0,
-          "twoPoint": 1,
+          "twoPoint": 0,
+          "threePoint": 0
+        },
+        {
+          "number": "11",
+          "name": "Brandon Read Strahan",
+          "points": 0,
+          "fouls": 0,
+          "onePoint": 0,
+          "twoPoint": 0,
+          "threePoint": 0
+        },
+        {
+          "number": "15",
+          "name": "Alejandro Prescott-Cornejo",
+          "points": 20,
+          "fouls": 3,
+          "onePoint": 5,
+          "twoPoint": 6,
+          "threePoint": 1
+        },
+        {
+          "number": "21",
+          "name": "Cooper Pantano",
+          "points": 0,
+          "fouls": 1,
+          "onePoint": 0,
+          "twoPoint": 0,
+          "threePoint": 0
+        },
+        {
+          "number": "23",
+          "name": "Waseem Elmgriaf",
+          "points": 0,
+          "fouls": 1,
+          "onePoint": 0,
+          "twoPoint": 0,
+          "threePoint": 0
+        },
+        {
+          "number": "24",
+          "name": "Chun Sing Wong",
+          "points": 0,
+          "fouls": 1,
+          "onePoint": 0,
+          "twoPoint": 0,
+          "threePoint": 0
+        },
+        {
+          "number": "30",
+          "name": "Errol Otto",
+          "points": 14,
+          "fouls": 4,
+          "onePoint": 3,
+          "twoPoint": 4,
           "threePoint": 1
         }
       ]

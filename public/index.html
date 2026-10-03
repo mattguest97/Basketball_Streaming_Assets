@@ -94,18 +94,48 @@
       const foulTypeEl = document.getElementById('foulType');
       const foulMainEl = document.getElementById('foulMain');
       const foulSubEl = document.getElementById('foulSub');
+      const playerNameForAnnouncement = (team, playerNumber) => {
+        const side = team === 'home' ? 'home' : 'away';
+        const number = String(playerNumber || '').trim();
+        if (!number) return '';
+        const player = (window.__state?.[side]?.lineup || []).find((entry) => String(entry.number || '').trim() === number);
+        return player?.name || '';
+      };
       window.__state = null;
       socket.on('state', (s) => { window.__state = s; });
-      socket.on('announceFoul', (p) => {
-        const teamLabel = (p.team === 'home') ? (window.__state?.home?.shortName || window.__state?.home?.name || 'HOME') : (window.__state?.away?.shortName || window.__state?.away?.name || 'AWAY');
-        foulMainEl.textContent = `${teamLabel} #${p.playerNumber || ''}`;
-        foulSubEl.textContent = p.type || '';
-        foulTypeEl.textContent = (p.type || '').toUpperCase();
-        const teamColor = (p.team === 'home') ? window.__state?.home?.color || '#0052cc' : window.__state?.away?.color || '#cc0000';
+      function showAnnouncement({ team, type, mainText, subText, duration }) {
+        const teamLabel = (team === 'home') ? (window.__state?.home?.shortName || window.__state?.home?.name || 'HOME') : (window.__state?.away?.shortName || window.__state?.away?.name || 'AWAY');
+        foulMainEl.textContent = mainText || teamLabel;
+        foulSubEl.textContent = subText || `${teamLabel}`;
+        foulTypeEl.textContent = (type || '').toUpperCase();
+        const teamColor = (team === 'home') ? window.__state?.home?.color || '#0052cc' : window.__state?.away?.color || '#cc0000';
         announceCard.style.border = `4px solid ${teamColor}`;
         announceCard.classList.add('show');
-        const dur = Number(p.duration) || 4;
+        const dur = Number(duration) || 4;
         setTimeout(()=>{ announceCard.classList.remove('show'); }, dur*1000);
+      }
+
+      socket.on('announceFoul', (p) => {
+        const teamLabel = (p.team === 'home') ? (window.__state?.home?.shortName || window.__state?.home?.name || 'HOME') : (window.__state?.away?.shortName || window.__state?.away?.name || 'AWAY');
+        const playerName = playerNameForAnnouncement(p.team, p.playerNumber);
+        showAnnouncement({
+          team: p.team,
+          type: p.type,
+          mainText: playerName || (p.playerNumber ? `#${p.playerNumber}` : teamLabel),
+          subText: `${teamLabel}${p.playerNumber ? ` #${p.playerNumber}` : ''}`,
+          duration: p.duration
+        });
+      });
+
+      socket.on('announceTimeout', (p) => {
+        const teamLabel = (p.team === 'home') ? (window.__state?.home?.shortName || window.__state?.home?.name || 'HOME') : (window.__state?.away?.shortName || window.__state?.away?.name || 'AWAY');
+        showAnnouncement({
+          team: p.team,
+          type: 'timeout',
+          mainText: p.label || teamLabel,
+          subText: `${p.label || teamLabel} timeout`,
+          duration: p.duration
+        });
       });
 
       // dynamic scaling: compute --scale based on board size vs design size

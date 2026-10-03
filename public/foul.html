@@ -11,9 +11,9 @@
       .card{background:rgba(0,0,0,0.6);color:#fff;padding:28px 36px;border-radius:12px;text-align:center;min-width:600px;max-width:90%;box-shadow:0 12px 40px rgba(0,0,0,1);opacity:0;transform:scale(0.96);transition:opacity 400ms ease, transform 400ms ease}
       .card.show{opacity:1;transform:scale(1)}
       .foul-type{font-family:Oswald, Arial, sans-serif;font-size:28px;color:#f2c390; text-shadow: 2px 2px 2px #000000;   }
-      .foul-main{font-family:Oswald, Arial, sans-serif;font-size:72px;margin-top:6px}
-      .foul-sub{font-size:20px;color:rgba(255,255,255,0.85);margin-top:8px}
-      @media (max-width:720px){.card{padding:18px;min-width:260px}.foul-main{font-size:44px}}
+      .foul-main{font-family:Oswald, Arial, sans-serif;font-size:72px;margin-top:6px;line-height:1.05}
+      .foul-sub{font-size:18px;color:rgba(255,255,255,0.85);margin-top:8px;letter-spacing:0.08em;text-transform:uppercase}
+      @media (max-width:720px){.card{padding:18px;min-width:260px}.foul-main{font-size:44px}.foul-sub{font-size:14px;letter-spacing:0.06em}}
     </style>
   </head>
   <body>
@@ -33,11 +33,20 @@
       const foulMain = document.getElementById('foulMain');
       const foulSub = document.getElementById('foulSub');
 
+      function playerNameForAnnouncement(team, playerNumber) {
+        const side = team === 'home' ? 'home' : 'away';
+        const number = String(playerNumber || '').trim();
+        if (!number) return '';
+        const player = (window.__state?.[side]?.lineup || []).find((entry) => String(entry.number || '').trim() === number);
+        return player?.name || '';
+      }
+
       function showAnnouncement(p) {
         // p: {team, playerNumber, type, duration}
         const teamLabel = (p.team === 'home') ? (window.__state?.home?.shortName || window.__state?.home?.name || 'HOME') : (window.__state?.away?.shortName || window.__state?.away?.name || 'AWAY');
-        foulMain.textContent = `${teamLabel}${p.playerNumber ? ' #' + p.playerNumber : ''}`;
-        foulSub.textContent = p.type || '';
+        const playerName = playerNameForAnnouncement(p.team, p.playerNumber);
+        foulMain.textContent = playerName || (p.playerNumber ? `#${p.playerNumber}` : teamLabel);
+        foulSub.textContent = `${teamLabel}${p.playerNumber ? ' #' + p.playerNumber : ''}`;
         foulType.textContent = (p.type || '').toUpperCase();
         // color by team (use state if available)
         const teamColor = (p.team === 'home') ? (window.__state?.home?.color || '#0052cc') : (window.__state?.away?.color || '#cc0000');
@@ -48,6 +57,16 @@
       }
 
       socket.on('announceFoul', (p) => { showAnnouncement(p); });
+      socket.on('announceTimeout', (p) => {
+        const teamLabel = (p.team === 'home') ? 'HOME' : 'AWAY';
+        showAnnouncement({
+          team: p.team,
+          type: 'TIMEOUT',
+          playerNumber: '',
+          duration: p.duration,
+          label: `${p.label || teamLabel} TIMEOUT`
+        });
+      });
 
       // keep last state for colors from main state emitter
       window.__state = null;

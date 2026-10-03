@@ -178,8 +178,13 @@ async function pollPlayHq() {
       home: (game.statistics?.home?.players || []).map(normaliseLivePlayer).filter(Boolean),
       away: (game.statistics?.away?.players || []).map(normaliseLivePlayer).filter(Boolean)
     };
+    const liveTeamNames = {
+      home: String(game.home?.name || '').trim(),
+      away: String(game.away?.name || '').trim()
+    };
     for (const side of ['home', 'away']) {
       const players = liveTeams[side];
+      if (liveTeamNames[side]) state[side].name = liveTeamNames[side];
       state[side].lineup = players;
       persistLivePlayers(side, players);
     }
@@ -196,7 +201,7 @@ async function pollPlayHq() {
         liveFeedConfig.error = `Time unavailable: ${error.message}`;
       }
     }
-    state.liveStats = { source: 'playhq', updatedAt: new Date().toISOString(), home: liveTeams.home, away: liveTeams.away };
+    state.liveStats = { source: 'playhq', updatedAt: new Date().toISOString(), teamNames: liveTeamNames, home: liveTeams.home, away: liveTeams.away };
     liveFeedConfig.lastUpdated = state.liveStats.updatedAt;
     if (!liveFeedConfig.error.startsWith('Time unavailable:')) liveFeedConfig.error = '';
     syncLiveFeedState();
@@ -461,6 +466,11 @@ io.on('connection', (socket) => {
     if (!['home','away'].includes(team)) return;
     if (state[team].timeoutsRemaining > 0) {
       state[team].timeoutsRemaining -= 1;
+      io.emit('announceTimeout', {
+        team,
+        duration: 4,
+        label: state[team].shortName || state[team].name || team.toUpperCase()
+      });
       io.emit('state', state);
     }
   });

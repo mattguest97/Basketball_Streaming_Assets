@@ -33,9 +33,9 @@ html:has(> body > #board), html:has(> body > #board) body{background:transparent
 .score-row{display:flex;align-items:center;justify-content:space-between;width:100%;gap:1rem}
 .team-score{font-family:Orbitron, Oswald, Arial, sans-serif;font-size:14rem;color:#fff;text-shadow:0 6px 18px rgba(0,0,0,0.6);line-height:0.9;padding:1rem 1em;}
 
-.clock-wrap{background:linear-gradient(180deg,rgba(0,0,0,0.6),rgba(0,0,0,0.8));padding:5px 5px;border-radius:8px;display:flex;flex-direction:column;align-items:center}
+.clock-wrap{background:linear-gradient(180deg,rgba(0,0,0,0.8),rgba(0,0,0,0.9));padding:5px 5px;border-radius:8px;display:flex;flex-direction:column;align-items:center}
 .clock-panel{min-width:0;display:flex;justify-content:center}
-.clock{font-family:Orbitron, Oswald, Arial, sans-serif;font-size:clamp(2rem,4vw,4rem);font-variant-numeric:tabular-nums;width:6ch;color:var(--accent);letter-spacing:2px;text-align:center;white-space:nowrap}
+.clock{font-family:Orbitron, Oswald, Arial, sans-serif;font-size:clamp(2rem,4vw,4rem);font-variant-numeric:tabular-nums;width:6ch;color:var(--accent);letter-spacing:2px;text-align:center;white-space:nowrap;opacity:1}
 .quarter{font-size:1.25rem;color:var(--muted);margin-top:6px}
 
 /* left/right specific adjustments */
