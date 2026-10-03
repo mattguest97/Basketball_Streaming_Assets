@@ -337,6 +337,7 @@
       let lineupInitialised = false;
       let savedTeams = [];
       let currentGameState = null;
+      let playHqSettingsDirty = false;
 
       socket.on('state', (state) => {
         currentGameState = state;
@@ -359,13 +360,16 @@
         document.getElementById('tipoffSeconds').value = tipoffSeconds % 60;
         if (state.tipoffTitle) document.getElementById('tipoffTitle').value = state.tipoffTitle;
         document.getElementById('tipoffShowScore').checked = state.tipoffShowScore !== false;
-        document.getElementById('playHqUrl').value = state.liveFeed?.url || '';
-        document.getElementById('playHqEnabled').checked = !!state.liveFeed?.enabled;
-        document.getElementById('playHqUseScore').checked = !!state.liveFeed?.useScore;
-        document.getElementById('playHqUseTime').checked = !!state.liveFeed?.useTime;
-        document.getElementById('playHqPollSeconds').value = state.liveFeed?.pollSeconds || 10;
+        if (!playHqSettingsDirty) {
+          document.getElementById('playHqUrl').value = state.liveFeed?.url || '';
+          document.getElementById('playHqEnabled').checked = !!state.liveFeed?.enabled;
+          document.getElementById('playHqUseScore').checked = !!state.liveFeed?.useScore;
+          document.getElementById('playHqUseTime').checked = !!state.liveFeed?.useTime;
+          document.getElementById('playHqPollSeconds').value = state.liveFeed?.pollSeconds || 10;
+        }
         const pollSeconds = state.liveFeed?.pollSeconds || 10;
-        const feedStatus = state.liveFeed?.error ? `Error: ${state.liveFeed.error}` : state.liveFeed?.enabled ? `Polling every ${pollSeconds} seconds${state.liveFeed.lastUpdated ? `; updated ${state.liveFeed.lastUpdated}` : ''}` : 'Not connected';
+        const feedPolling = state.liveFeed?.enabled || state.liveFeed?.useScore || state.liveFeed?.useTime;
+        const feedStatus = state.liveFeed?.error ? `Error: ${state.liveFeed.error}` : feedPolling ? `Polling every ${pollSeconds} seconds${state.liveFeed.lastUpdated ? `; updated ${state.liveFeed.lastUpdated}` : ''}` : 'Not connected';
         document.getElementById('playHqStatus').textContent = feedStatus;
         if (!lineupInitialised) {
           document.getElementById('homeLineupInput').value = lineupText(state.home.lineup);
@@ -374,6 +378,11 @@
         }
       });
       socket.on('playerStatsError', (message) => teamLibraryStatus(message));
+
+      ['playHqUrl', 'playHqEnabled', 'playHqUseScore', 'playHqUseTime', 'playHqPollSeconds'].forEach((id) => {
+        document.getElementById(id).addEventListener('input', () => { playHqSettingsDirty = true; });
+        document.getElementById(id).addEventListener('change', () => { playHqSettingsDirty = true; });
+      });
 
       function formatClock(seconds) {
         const safeSeconds = Math.max(0, Number(seconds) || 0);
@@ -536,10 +545,6 @@
       }
       function savePlayHqFeed() {
         const enabled = document.getElementById('playHqEnabled').checked;
-        if (enabled) {
-          document.getElementById('playHqUseScore').checked = true;
-          document.getElementById('playHqUseTime').checked = true;
-        }
         socket.emit('playHqFeed', {
           url: document.getElementById('playHqUrl').value.trim(),
           enabled,
@@ -547,6 +552,7 @@
           useTime: document.getElementById('playHqUseTime').checked,
           pollSeconds: document.getElementById('playHqPollSeconds').value
         });
+        playHqSettingsDirty = false;
       }
       async function savePlayHqTeam(side) {
         const liveStats = currentGameState?.liveStats;

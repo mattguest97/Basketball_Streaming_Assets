@@ -153,7 +153,7 @@ function secondsFromClock(value) {
 
 async function pollPlayHq() {
   const gameId = gameIdFromUrl(liveFeedConfig.url);
-  if (!liveFeedConfig.enabled || !gameId) return;
+  if ((!liveFeedConfig.enabled && !liveFeedConfig.useScore && !liveFeedConfig.useTime) || !gameId) return;
   try {
     const response = await fetch(playHqGraphqlUrl, {
       method: 'POST',
@@ -182,11 +182,13 @@ async function pollPlayHq() {
       home: String(game.home?.name || '').trim(),
       away: String(game.away?.name || '').trim()
     };
-    for (const side of ['home', 'away']) {
-      const players = liveTeams[side];
-      if (liveTeamNames[side]) state[side].name = liveTeamNames[side];
-      state[side].lineup = players;
-      persistLivePlayers(side, players);
+    if (liveFeedConfig.enabled) {
+      for (const side of ['home', 'away']) {
+        const players = liveTeams[side];
+        if (liveTeamNames[side]) state[side].name = liveTeamNames[side];
+        state[side].lineup = players;
+        persistLivePlayers(side, players);
+      }
     }
     if (liveFeedConfig.useScore) {
       for (const side of ['home', 'away']) {
@@ -201,8 +203,11 @@ async function pollPlayHq() {
         liveFeedConfig.error = `Time unavailable: ${error.message}`;
       }
     }
-    state.liveStats = { source: 'playhq', updatedAt: new Date().toISOString(), teamNames: liveTeamNames, home: liveTeams.home, away: liveTeams.away };
-    liveFeedConfig.lastUpdated = state.liveStats.updatedAt;
+    const updatedAt = new Date().toISOString();
+    if (liveFeedConfig.enabled) {
+      state.liveStats = { source: 'playhq', updatedAt, teamNames: liveTeamNames, home: liveTeams.home, away: liveTeams.away };
+    }
+    liveFeedConfig.lastUpdated = updatedAt;
     if (!liveFeedConfig.error.startsWith('Time unavailable:')) liveFeedConfig.error = '';
     syncLiveFeedState();
     io.emit('state', state);
@@ -252,8 +257,9 @@ function configureLiveFeed(url, enabled, useScore, useTime, pollSeconds) {
   };
   syncLiveFeedState();
   if (liveFeedTimer) clearInterval(liveFeedTimer);
-  liveFeedTimer = liveFeedConfig.enabled ? setInterval(pollPlayHq, safePollSeconds * 1000) : null;
-  if (liveFeedConfig.enabled) pollPlayHq();
+  const shouldPoll = liveFeedConfig.enabled || liveFeedConfig.useScore || liveFeedConfig.useTime;
+  liveFeedTimer = shouldPoll ? setInterval(pollPlayHq, safePollSeconds * 1000) : null;
+  if (shouldPoll) pollPlayHq();
 }
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -435,7 +441,7 @@ io.on('connection', (socket) => {
 
   socket.on('playHqFeed', ({ url, enabled, useScore, useTime, pollSeconds }) => {
     const gameId = gameIdFromUrl(url);
-    if (enabled && !gameId) {
+    if ((enabled || useScore || useTime) && !gameId) {
       liveFeedConfig.error = 'Enter a valid PlayHQ game-centre URL.';
       syncLiveFeedState();
       io.emit('state', state);
