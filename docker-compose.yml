@@ -1,0 +1,14 @@
+services:
+  scoreboard:
+    build: .
+    network_mode: host
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      TEAMS_FILE: /data/teams.json
+    volumes:
+      - teams-data:/data
+    restart: unless-stopped
+
+volumes:
+  teams-data:

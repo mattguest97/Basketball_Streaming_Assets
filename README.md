@@ -40,6 +40,16 @@ The default port is `3000`.
 
 Stop the server with `Ctrl+C`.
 
+## Run with Docker
+
+Build and start the app from the repository root:
+
+```powershell
+docker compose up --build -d
+```
+
+The image includes Node.js, npm, and the production dependencies installed during the build, so the running container does not need to download or install packages. The first build needs internet access to download the base image and npm dependencies. The container uses the host network and listens on port `3000`, so open <http://localhost:3000>. There is no port mapping in Compose when using host networking. On Docker Desktop for Windows, enable host networking in **Settings → Resources → Network → Enable host networking** (Docker Desktop 4.34 or newer, Linux containers). Team profiles are stored in the persistent `teams-data` volume. Stop the container with `docker compose down`; remove the saved profiles as well with `docker compose down --volumes`.
+
 Connect on a phone by using the host IP address. All end points are visable. (Control.html has custom layout)
 
 ## Endpoints
