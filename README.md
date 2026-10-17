@@ -4,7 +4,7 @@ This is a Javascript app that allows for the generation of streaming assets with
 
 The elements that are made on the end points and be overlayed bu HTML into OBS, and then easily controlled from a laptop (full controls) or a mobile by just using the web controls (sub-set of the controls). I use a camera to stream it then a cold shoe phone mount to control the stream elements. 
 
-The FIBA stats are currently a work in progress and don't currently work. I am also looking into integration of Basketball Englands Play HQ, both for live stats and live score/scoreboard. 
+The FIBA stats are currently a work in progress and don't currently work. PlayHQ can provide live team sheets, player statistics, scores, and game clock data from a public game-centre link.
 
 A browser-based basketball scoreboard for Portsmouth Force. The control panel updates the main display and overlay pages in real time using Socket.IO.
 
@@ -19,7 +19,7 @@ A browser-based basketball scoreboard for Portsmouth Force. The control panel up
 - Configurable team names, colours, logos, fonts, and player line-ups.
 - Saved team profiles in `teams.json`, manageable from the control panel.
 - Transparent tip-off, line-up, and foul announcement overlays for production use.
-- Optional PlayHQ live game polling every 10 seconds with player advanced statistics.
+- Optional PlayHQ live game polling for team sheets, player statistics, scores, and clock data.
 - FIBA Live Stats preview with a shot map, team statistics, and player statistics.
 - Browser-based control panel with no database or build step required.
 
@@ -49,6 +49,16 @@ docker compose up --build -d
 ```
 
 The image includes Node.js, npm, and the production dependencies installed during the build, so the running container does not need to download or install packages. The first build needs internet access to download the base image and npm dependencies. The container uses the host network and listens on port `3000`, so open <http://localhost:3000>. There is no port mapping in Compose when using host networking. On Docker Desktop for Windows, enable host networking in **Settings → Resources → Network → Enable host networking** (Docker Desktop 4.34 or newer, Linux containers). Team profiles are stored in the persistent `teams-data` volume. Stop the container with `docker compose down`; remove the saved profiles as well with `docker compose down --volumes`.
+
+### Publish and deploy updates from GitHub
+
+Pushes to `main` build and publish `ghcr.io/mattguest97/basketball-streaming-assets:latest`. Make the GHCR package public so the Linux server can pull it without registry credentials. The **Application Update** button dispatches a GitHub Actions deployment, which connects to the server over SSH, pulls the image, and recreates the Compose service.
+
+Configure these repository Actions secrets for the deployment workflow: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `DEPLOY_PATH`, and optionally `DEPLOY_PORT` (defaults to `22`). The SSH user must be able to run Docker Compose. `DEPLOY_PATH` must be the absolute path to this repository checkout on the server.
+
+On the scoreboard host, create a `.env` file beside `docker-compose.yml` with `GH_UPDATE_TOKEN` set to a fine-grained GitHub token that has Actions read/write access to this repository, and `UPDATE_BUTTON_SECRET` set to a private key of your choice. Enter that update key in the control panel when requesting an update. Keep the scoreboard on a trusted network; the control panel itself does not provide user accounts or HTTPS.
+
+The first deployment requires a normal checkout and `docker compose up --build -d`. After that, push code to `main`, wait for the image publish workflow to finish, then use **Download Update & Restart** in `/control`.
 
 Connect on a phone by using the host IP address. All end points are visable. (Control.html has custom layout)
 

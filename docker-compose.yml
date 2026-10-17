@@ -1,11 +1,14 @@
 services:
   scoreboard:
+    image: ghcr.io/mattguest97/basketball-streaming-assets:latest
     build: .
     network_mode: host
     environment:
       NODE_ENV: production
       PORT: 3000
       TEAMS_FILE: /data/teams.json
+      GH_UPDATE_TOKEN: ${GH_UPDATE_TOKEN:-}
+      UPDATE_BUTTON_SECRET: ${UPDATE_BUTTON_SECRET:-}
     volumes:
       - teams-data:/data
     restart: unless-stopped

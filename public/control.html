@@ -147,6 +147,15 @@
         </div>
       </div>
 
+      <div class="panel">
+        <h3>Application Update</h3>
+        <div class="lineup-help">Pull the latest GitHub build and restart the scoreboard.</div>
+        <label for="updateButtonKey">Update key</label>
+        <input id="updateButtonKey" type="password" autocomplete="off" style="width:100%" />
+        <button id="updateAppButton" class="btn" onclick="requestAppUpdate()">Download Update &amp; Restart</button>
+        <div id="updateAppStatus" class="lineup-help" aria-live="polite"></div>
+      </div>
+
       <div class="panel foul-announcement">
         <h3>Foul Announcement</h3>
         <div class="foul-announcement-controls">
@@ -260,7 +269,7 @@
         </div>
         <div style="margin-top:6px">
           <div class="playhq-options">
-          <label><input id="playHqEnabled" type="checkbox" /> Enable PlayHQ player-stat polling</label>
+          <label><input id="playHqEnabled" type="checkbox" /> Import live team sheets and player statistics</label>
           <label><input id="playHqUseScore" type="checkbox" /> Replace scoreboard scores with PlayHQ scores</label>
           <label><input id="playHqUseTime" type="checkbox" /> Replace scoreboard clock with PlayHQ time</label>
           </div>
@@ -553,6 +562,29 @@
           pollSeconds: document.getElementById('playHqPollSeconds').value
         });
         playHqSettingsDirty = false;
+      }
+      async function requestAppUpdate() {
+        const keyInput = document.getElementById('updateButtonKey');
+        const button = document.getElementById('updateAppButton');
+        const status = document.getElementById('updateAppStatus');
+        const key = keyInput.value;
+        if (!key) {
+          status.textContent = 'Enter the update key configured on the server.';
+          return;
+        }
+        button.disabled = true;
+        status.textContent = 'Requesting GitHub deployment...';
+        try {
+          const response = await fetch('/api/update', { method: 'POST', headers: { 'x-update-key': key } });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'Update request failed');
+          status.textContent = result.message;
+        } catch (error) {
+          status.textContent = `Update failed: ${error.message}`;
+        } finally {
+          keyInput.value = '';
+          button.disabled = false;
+        }
       }
       async function savePlayHqTeam(side) {
         const liveStats = currentGameState?.liveStats;

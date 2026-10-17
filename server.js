@@ -10,20 +10,23 @@ const io = new Server(server);
 const teamsFile = process.env.TEAMS_FILE || path.join(__dirname, 'teams.json');
 const playHqGraphqlUrl = 'https://api.euprod.playhq.com/graphql';
 const playHqSpectatorUrl = 'https://spectator.euprod.playhq.com/graphql';
-const playHqQuery = `
-  query LiveGame($gameId: ID!) {
-    discoverGame(gameID: $gameId) {
-      id
-      home { ... on DiscoverTeam { name } ... on ProvisionalTeam { name } }
-      away { ... on DiscoverTeam { name } ... on ProvisionalTeam { name } }
-      result { home { score } away { score } }
+const playHqLiveQuery = `
+  query LiveGameStatistics($gameId: ID!) {
+    game(id: $gameId) {
+      clock { period periodValue status time lastUpdatedAt }
       statistics {
-        home { players { playerNumber player { ... on DiscoverParticipant { profile { firstName lastName } } ... on DiscoverParticipantFillInPlayer { profile { firstName lastName } } ... on DiscoverGamePermitFillInPlayer { profile { firstName lastName } } ... on DiscoverRegularFillInPlayer { name } ... on DiscoverAnonymousParticipant { name } } statistics { count type { value shortName label } } periodStatistics { type statistics { type { value label shortName advanced } count details { value } } } } }
-        away { players { playerNumber player { ... on DiscoverParticipant { profile { firstName lastName } } ... on DiscoverParticipantFillInPlayer { profile { firstName lastName } } ... on DiscoverGamePermitFillInPlayer { profile { firstName lastName } } ... on DiscoverRegularFillInPlayer { name } ... on DiscoverAnonymousParticipant { name } } statistics { count type { value shortName label } } periodStatistics { type statistics { type { value label shortName advanced } count details { value } } } } }
+        home {
+          statisticsV2 { type { type value } count }
+          players { id profileID name playerNumber periodStatistics { period { value } side type statistics { type { value } count } status displayOrder } statistics { type { value } count } permitType }
+        }
+        away {
+          statisticsV2 { type { type value } count }
+          players { id profileID name playerNumber periodStatistics { period { value } side type statistics { type { value } count } status displayOrder } statistics { type { value } count } permitType }
+        }
       }
     }
   }`;
-const playHqClockQuery = 'query LiveClock($gameId: ID!) { game(id: $gameId) { clock { period periodValue status time lastUpdatedAt } } }';
+const playHqQuery = 'query LiveGame($gameId: ID!) { discoverGame(gameID: $gameId) { id home { ... on DiscoverTeam { name } ... on ProvisionalTeam { name } } away { ... on DiscoverTeam { name } ... on ProvisionalTeam { name } } result { home { score } away { score } } } }';
 let liveFeedTimer = null;
 let liveFeedConfig = { url: '', enabled: false, useScore: false, useTime: false, pollSeconds: 10, lastUpdated: null, error: '' };
 
@@ -99,7 +102,7 @@ function playerName(player) {
 }
 
 function normaliseLivePlayer(player) {
-  const name = playerName(player.player);
+  const name = playerName(player.player || player);
   if (isPrivatePlayerName(name)) return null;
   const advanced = {};
   const periodStatistics = (player.periodStatistics || []).flatMap((period) => period.statistics || []);
@@ -114,7 +117,7 @@ function normaliseLivePlayer(player) {
     number: String(player.playerNumber || ''),
     name,
     points: Number(player.playerPoints) || valueForStatistic(player.statistics, ['POINTS', 'PTS', 'TOTAL_POINTS', 'TOTAL_SCORE']),
-    fouls: valueForStatistic(allStatistics, ['F', 'PF', 'TOTAL_FOULS', 'FOULS', 'FOUL', 'PERSONAL_FOULS', 'PERSONAL FOULS']),
+    fouls: valueForStatistic(allStatistics, ['F', 'PF', 'TOTAL_FOULS', 'FOULS', 'FOUL', 'PERSONAL_FOUL', 'PERSONAL_FOULS', 'PERSONAL FOULS']),
     onePoint: valueForStatistic(allStatistics, ['1_POINT_SCORE', 'ONE_POINT_SCORE']),
     twoPoint: valueForStatistic(allStatistics, ['2_POINT_SCORE', 'TWO_POINT_SCORE']),
     threePoint: valueForStatistic(allStatistics, ['3_POINT_SCORE', 'THREE_POINT_SCORE']),
@@ -143,7 +146,9 @@ function persistLivePlayers(side, players) {
 }
 
 function teamScore(teamStatistics) {
-  return valueForStatistic(teamStatistics?.statisticsV2 || teamStatistics?.statistics, ['POINTS', 'PTS', 'TOTAL_POINTS', 'SCORE']);
+  const statistics = teamStatistics?.statisticsV2 || teamStatistics?.statistics || [];
+  const match = statistics.find((statistic) => ['POINTS', 'PTS', 'TOTAL_POINTS', 'TOTAL_SCORE', 'SCORE'].includes(String(statistic.type?.value || '').toUpperCase()));
+  return match ? Number(match.count) || 0 : null;
 }
 
 function secondsFromClock(value) {
@@ -174,9 +179,27 @@ async function pollPlayHq() {
     const game = payload.data?.discoverGame;
     if (!game) throw new Error('PlayHQ returned no game data');
 
+    const liveResponse = await fetch(playHqSpectatorUrl, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        accept: '*/*',
+        'x-phq-tenant': 'be',
+        origin: 'https://www.playhq.com',
+        referer: 'https://www.playhq.com/',
+        'user-agent': 'Mozilla/5.0'
+      },
+      body: JSON.stringify({ operationName: 'LiveGameStatistics', query: playHqLiveQuery, variables: { gameId } })
+    });
+    if (!liveResponse.ok) throw new Error(`PlayHQ live data returned HTTP ${liveResponse.status}`);
+    const livePayload = await liveResponse.json();
+    if (livePayload.errors?.length) throw new Error(livePayload.errors[0].message || 'PlayHQ live data query failed');
+    const liveGame = livePayload.data?.game;
+    if (!liveGame) throw new Error('PlayHQ returned no live game data');
+
     const liveTeams = {
-      home: (game.statistics?.home?.players || []).map(normaliseLivePlayer).filter(Boolean),
-      away: (game.statistics?.away?.players || []).map(normaliseLivePlayer).filter(Boolean)
+      home: (liveGame.statistics?.home?.players || game.statistics?.home?.players || []).map(normaliseLivePlayer).filter(Boolean),
+      away: (liveGame.statistics?.away?.players || game.statistics?.away?.players || []).map(normaliseLivePlayer).filter(Boolean)
     };
     const liveTeamNames = {
       home: String(game.home?.name || '').trim(),
@@ -192,13 +215,15 @@ async function pollPlayHq() {
     }
     if (liveFeedConfig.useScore) {
       for (const side of ['home', 'away']) {
-        const score = Number(game.result?.[side]?.score);
+        const liveScore = teamScore(liveGame.statistics?.[side]);
+        const resultScore = game.result?.[side]?.score;
+        const score = liveScore ?? (resultScore == null ? NaN : Number(resultScore));
         if (Number.isFinite(score)) state[side].score = score;
       }
     }
     if (liveFeedConfig.useTime) {
       try {
-        await updatePlayHqClock(gameId);
+        updatePlayHqClock(liveGame.clock);
       } catch (error) {
         liveFeedConfig.error = `Time unavailable: ${error.message}`;
       }
@@ -218,24 +243,9 @@ async function pollPlayHq() {
   }
 }
 
-async function updatePlayHqClock(gameId) {
-  const response = await fetch(playHqSpectatorUrl, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      accept: '*/*',
-      'x-phq-tenant': 'be',
-      origin: 'https://www.playhq.com',
-      referer: 'https://www.playhq.com/',
-      'user-agent': 'Mozilla/5.0'
-    },
-    body: JSON.stringify({ operationName: 'LiveClock', query: playHqClockQuery, variables: { gameId } })
-  });
-  if (!response.ok) throw new Error(`PlayHQ clock returned HTTP ${response.status}`);
-  const payload = await response.json();
-  if (payload.errors?.length) throw new Error(payload.errors[0].message || 'PlayHQ clock query failed');
-  const clock = payload.data?.game?.clock;
+function updatePlayHqClock(clock) {
   const seconds = secondsFromClock(clock?.time);
+  if (seconds === null) throw new Error('PlayHQ returned no clock data');
   if (seconds !== null) state.clock = seconds;
   if (clock?.periodValue) {
     const period = { FIRST_QTR: 1, SECOND_QTR: 2, THIRD_QTR: 3, FOURTH_QTR: 4 }[clock.periodValue];
@@ -308,6 +318,43 @@ app.delete('/api/teams/:id', (req, res) => {
   if (filtered.length === teams.length) return res.status(404).json({ ok: false, error: 'Team not found.' });
   writeTeams(filtered);
   res.json({ ok: true, teams: filtered });
+});
+
+app.post('/api/update', async (req, res) => {
+  const expectedSecret = process.env.UPDATE_BUTTON_SECRET || '';
+  const suppliedSecret = Buffer.from(String(req.get('x-update-key') || ''), 'utf8');
+  const expectedSecretBuffer = Buffer.from(expectedSecret, 'utf8');
+  if (!expectedSecret) return res.status(503).json({ ok: false, error: 'Update button is not configured on the server.' });
+  if (suppliedSecret.length !== expectedSecretBuffer.length || !crypto.timingSafeEqual(suppliedSecret, expectedSecretBuffer)) {
+    return res.status(403).json({ ok: false, error: 'The update key is incorrect.' });
+  }
+
+  const token = process.env.GH_UPDATE_TOKEN;
+  if (!token) return res.status(503).json({ ok: false, error: 'GitHub update access is not configured on the server.' });
+  const repository = process.env.UPDATE_GITHUB_REPOSITORY || 'mattguest97/Basketball_Streaming_Assets';
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)) {
+    return res.status(500).json({ ok: false, error: 'The configured GitHub repository is invalid.' });
+  }
+
+  try {
+    const response = await fetch(`https://api.github.com/repos/${repository}/actions/workflows/deploy.yml/dispatches`, {
+      method: 'POST',
+      headers: {
+        accept: 'application/vnd.github+json',
+        authorization: `Bearer ${token}`,
+        'content-type': 'application/json',
+        'user-agent': 'basketball-scoreboard'
+      },
+      body: JSON.stringify({ ref: process.env.UPDATE_GITHUB_REF || 'main' })
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      return res.status(502).json({ ok: false, error: payload.message || `GitHub returned HTTP ${response.status}.` });
+    }
+    res.status(202).json({ ok: true, message: 'GitHub deployment started. The scoreboard will restart after the image is pulled.' });
+  } catch (error) {
+    res.status(502).json({ ok: false, error: `Could not contact GitHub: ${error.message}` });
+  }
 });
 
 // Simple relay endpoint for FIBA Live Stats or other live feeds.
